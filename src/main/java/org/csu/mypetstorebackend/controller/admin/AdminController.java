@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
@@ -60,7 +61,7 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         // Get statistics
         Object stats = new Object() {
@@ -82,7 +83,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateCategoryRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Category category = new Category();
         category.setCategoryId(request.getCategoryId());
@@ -100,7 +101,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateCategoryRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Category category = new Category();
         category.setCategoryId(categoryId);
@@ -117,7 +118,7 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         catalogService.deleteCategory(categoryId);
         return ApiResponse.success("Category deleted successfully", null);
@@ -131,7 +132,7 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         if (keyword == null || keyword.isEmpty()) {
             return ApiResponse.badRequest("Search keyword is required");
@@ -148,7 +149,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateProductRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Product product = new Product();
         product.setProductId(request.getProductId());
@@ -167,7 +168,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateProductRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Product product = new Product();
         product.setProductId(productId);
@@ -184,10 +185,29 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         catalogService.deleteProduct(productId);
         return ApiResponse.success("Product deleted successfully", null);
+    }
+
+    @GetMapping("/products/search")
+    public ApiResponse<Object> searchProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
+        ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
+
+        if (keyword == null || keyword.isEmpty()) {
+            return ApiResponse.badRequest("Search keyword is required");
+        }
+
+        PageResponse<Product> result = catalogService.searchProducts(keyword, categoryId, page, pageSize);
+        return ApiResponse.success(result);
     }
 
     // Item Management
@@ -197,7 +217,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateItemRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Item item = new Item();
         item.setProductId(request.getProductId());
@@ -223,7 +243,7 @@ public class AdminController {
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
             @RequestBody CreateItemRequest request) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Item item = new Item();
         item.setItemId(itemId);
@@ -241,10 +261,29 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         catalogService.deleteItem(itemId);
         return ApiResponse.success("Item deleted successfully", null);
+    }
+
+    @GetMapping("/items/search")
+    public ApiResponse<Object> searchItems(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String productId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
+        ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
+
+        if (keyword == null || keyword.isEmpty()) {
+            return ApiResponse.badRequest("Search keyword is required");
+        }
+
+        PageResponse<Item> result = catalogService.searchItems(keyword, productId, page, pageSize);
+        return ApiResponse.success(result);
     }
 
     // Order Management
@@ -273,7 +312,7 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         Orders order = orderService.getOrderById(orderId);
         if (order == null) {
@@ -297,10 +336,28 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         orderService.deleteOrder(orderId);
         return ApiResponse.success("Order deleted successfully", null);
+    }
+
+    @GetMapping("/orders/search")
+    public ApiResponse<Object> searchOrders(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
+        ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
+
+        if (keyword == null || keyword.isEmpty()) {
+            return ApiResponse.badRequest("Search keyword is required");
+        }
+
+        PageResponse<Orders> result = orderService.searchOrders(keyword, page, pageSize);
+        return ApiResponse.success(result);
     }
 
     // User Management
@@ -330,7 +387,7 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
         ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
-        if (authCheck != null) return (ApiResponse<Account>) authCheck;
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
 
         QueryWrapper<Account> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userid", username);
@@ -341,6 +398,67 @@ public class AdminController {
         }
 
         return ApiResponse.success(account);
+    }
+
+    @GetMapping("/users/search")
+    public ApiResponse<Object> searchUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestHeader(value = "X-Admin-Role", required = false) String adminRole) {
+        ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
+
+        if (keyword == null || keyword.isEmpty()) {
+            return ApiResponse.badRequest("Search keyword is required");
+        }
+
+        Page<Account> pageObj = new Page<>(page, pageSize);
+        QueryWrapper<Account> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("userid", keyword).or().like("email", keyword);
+        Page<Account> result = accountMapper.selectPage(pageObj, queryWrapper);
+        PageResponse<Account> response = new PageResponse<>(result.getTotal(), page, pageSize, result.getRecords());
+        return ApiResponse.success(response);
+    }
+
+    @PostMapping("/users/{username}/reset-password")
+    public ApiResponse<Object> resetPassword(
+            @PathVariable String username,
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestHeader(value = "X-Admin-Role", required = false) String adminRole,
+            @RequestBody Map<String, String> request) {
+        ApiResponse<?> authCheck = checkAdminAuth(token, adminRole);
+        if (authCheck != null) return apiResponseFromAuthCheck(authCheck);
+
+        QueryWrapper<Account> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userid", username);
+        Account account = accountMapper.selectOne(queryWrapper);
+
+        if (account == null) {
+            return ApiResponse.notFound("User not found");
+        }
+
+        String newPassword = request.get("newPassword");
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ApiResponse.badRequest("New password is required");
+        }
+
+        // In production, hash the password before saving
+        account.setPassword(newPassword);
+        account.setUpdateTime(getCurrentTimestamp());
+        accountMapper.updateById(account);
+
+        Object response = new Object() {
+            public String updatedUsername = username;
+            public String message = "Password has been reset to default value";
+        };
+
+        return ApiResponse.success("Password reset successfully", response);
+    }
+
+    private String getCurrentTimestamp() {
+        return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
     }
 }
 

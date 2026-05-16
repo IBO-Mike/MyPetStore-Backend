@@ -9,7 +9,9 @@ import org.csu.mypetstorebackend.service.OrderService;
 import org.csu.mypetstorebackend.utils.JwtUtil;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orders")
@@ -29,6 +31,21 @@ public class OrderController {
             return null;
         }
         return JwtUtil.extractUsername(actualToken);
+    }
+
+    private String convertOrderStatusToString(int status) {
+        switch (status) {
+            case 0:
+                return "pending";
+            case 1:
+                return "shipped";
+            case 2:
+                return "delivered";
+            case 3:
+                return "cancelled";
+            default:
+                return "unknown";
+        }
     }
 
     @PostMapping
@@ -64,20 +81,19 @@ public class OrderController {
         Orders created = orderService.createOrder(username, order);
         List<LineItem> lineItems = orderService.getOrderLineItems(created.getOrderId());
 
-        Object response = new Object() {
-            public int orderId = created.getOrderId();
-            public String userId = created.getUserId();
-            public String orderDate = created.getOrderDate();
-            public Object totalPrice = created.getTotalPrice();
-            public String billToFirstName = created.getBillToFirstName();
-            public String billToLastName = created.getBillToLastName();
-            public String shipToFirstName = created.getShipToFirstName();
-            public String shipToLastName = created.getShipToLastName();
-            public String cardType = created.getCardType();
-            public String status = "pending";
-            public List<LineItem> lineItems = lineItems;
-            public String createTime = created.getCreateTime();
-        };
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("orderId", created.getOrderId());
+        response.put("userId", created.getUserId());
+        response.put("orderDate", created.getOrderDate());
+        response.put("totalPrice", created.getTotalPrice());
+        response.put("billToFirstName", created.getBillToFirstName());
+        response.put("billToLastName", created.getBillToLastName());
+        response.put("shipToFirstName", created.getShipToFirstName());
+        response.put("shipToLastName", created.getShipToLastName());
+        response.put("cardType", created.getCardType());
+        response.put("status", convertOrderStatusToString(created.getOrderStatus()));
+        response.put("lineItems", lineItems);
+        response.put("createTime", created.getCreateTime());
 
         return ApiResponse.created("Order created successfully", response);
     }
@@ -113,33 +129,32 @@ public class OrderController {
 
         List<LineItem> lineItems = orderService.getOrderLineItems(orderId);
 
-        Object response = new Object() {
-            public int orderId = order.getOrderId();
-            public String userId = order.getUserId();
-            public String orderDate = order.getOrderDate();
-            public Object totalPrice = order.getTotalPrice();
-            public String status = "pending";
-            public String billToFirstName = order.getBillToFirstName();
-            public String billToLastName = order.getBillToLastName();
-            public String billAddress1 = order.getBillAddress1();
-            public String billAddress2 = order.getBillAddress2();
-            public String billCity = order.getBillCity();
-            public String billState = order.getBillState();
-            public String billZip = order.getBillZip();
-            public String billCountry = order.getBillCountry();
-            public String shipToFirstName = order.getShipToFirstName();
-            public String shipToLastName = order.getShipToLastName();
-            public String shipAddress1 = order.getShipAddress1();
-            public String shipAddress2 = order.getShipAddress2();
-            public String shipCity = order.getShipCity();
-            public String shipState = order.getShipState();
-            public String shipZip = order.getShipZip();
-            public String shipCountry = order.getShipCountry();
-            public String courier = order.getCourier();
-            public String cardType = order.getCardType();
-            public List<LineItem> lineItems = lineItems;
-            public String createTime = order.getCreateTime();
-        };
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("orderId", order.getOrderId());
+        response.put("userId", order.getUserId());
+        response.put("orderDate", order.getOrderDate());
+        response.put("totalPrice", order.getTotalPrice());
+        response.put("status", convertOrderStatusToString(order.getOrderStatus()));
+        response.put("billToFirstName", order.getBillToFirstName());
+        response.put("billToLastName", order.getBillToLastName());
+        response.put("billAddress1", order.getBillAddress1());
+        response.put("billAddress2", order.getBillAddress2());
+        response.put("billCity", order.getBillCity());
+        response.put("billState", order.getBillState());
+        response.put("billZip", order.getBillZip());
+        response.put("billCountry", order.getBillCountry());
+        response.put("shipToFirstName", order.getShipToFirstName());
+        response.put("shipToLastName", order.getShipToLastName());
+        response.put("shipAddress1", order.getShipAddress1());
+        response.put("shipAddress2", order.getShipAddress2());
+        response.put("shipCity", order.getShipCity());
+        response.put("shipState", order.getShipState());
+        response.put("shipZip", order.getShipZip());
+        response.put("shipCountry", order.getShipCountry());
+        response.put("courier", order.getCourier());
+        response.put("cardType", order.getCardType());
+        response.put("lineItems", lineItems);
+        response.put("createTime", order.getCreateTime());
 
         return ApiResponse.success(response);
     }
@@ -167,4 +182,3 @@ public class OrderController {
         return ApiResponse.success("Order cancelled successfully", null);
     }
 }
-

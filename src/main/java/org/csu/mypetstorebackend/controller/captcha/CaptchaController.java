@@ -3,7 +3,6 @@ package org.csu.mypetstorebackend.controller.captcha;
 import org.csu.mypetstorebackend.common.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -27,11 +26,10 @@ public class CaptchaController {
         // Generate a simple base64 encoded image (in production, generate actual image)
         String captchaImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
-        Object response = new Object() {
-            public String captchaId = captchaId;
-            public String captchaImage = captchaImage;
-            public String sessionId = sessionId;
-        };
+        Map<String, String> response = new HashMap<>();
+        response.put("captchaId", captchaId);
+        response.put("captchaImage", captchaImage);
+        response.put("sessionId", sessionId);
 
         return ApiResponse.success(response);
     }
@@ -60,4 +58,3 @@ public class CaptchaController {
         return ApiResponse.success("Captcha verified successfully", null);
     }
 }
-

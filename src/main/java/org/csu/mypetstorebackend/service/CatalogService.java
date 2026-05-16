@@ -31,6 +31,7 @@ public interface CatalogService {
     Item createItem(Item item);
     Item updateItem(String itemId, Item item);
     void deleteItem(String itemId);
+    PageResponse<Item> searchItems(String keyword, String productId, int page, int pageSize);
 }
 
 

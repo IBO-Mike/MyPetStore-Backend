@@ -173,5 +173,19 @@ public class CatalogServiceImpl implements CatalogService {
         queryWrapper.eq("itemid", itemId);
         itemMapper.delete(queryWrapper);
     }
+
+    @Override
+    public PageResponse<Item> searchItems(String keyword, String productId, int page, int pageSize) {
+        Page<Item> pageObj = new Page<>(page, pageSize);
+        QueryWrapper<Item> queryWrapper = new QueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            queryWrapper.like("itemid", keyword);
+        }
+        if (productId != null && !productId.isEmpty()) {
+            queryWrapper.eq("productid", productId);
+        }
+        Page<Item> result = itemMapper.selectPage(pageObj, queryWrapper);
+        return new PageResponse<>(result.getTotal(), page, pageSize, result.getRecords());
+    }
 }
 

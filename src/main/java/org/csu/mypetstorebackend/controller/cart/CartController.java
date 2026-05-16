@@ -5,24 +5,30 @@ import org.csu.mypetstorebackend.dto.CartItemRequest;
 import org.csu.mypetstorebackend.entity.Cart;
 import org.csu.mypetstorebackend.entity.CartItem;
 import org.csu.mypetstorebackend.entity.Item;
+import org.csu.mypetstorebackend.entity.Product;
 import org.csu.mypetstorebackend.persistence.ItemMapper;
+import org.csu.mypetstorebackend.persistence.ProductMapper;
 import org.csu.mypetstorebackend.service.CartService;
 import org.csu.mypetstorebackend.utils.JwtUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/cart")
 public class CartController {
     private final CartService cartService;
     private final ItemMapper itemMapper;
+    private final ProductMapper productMapper;
 
-    public CartController(CartService cartService, ItemMapper itemMapper) {
+    public CartController(CartService cartService, ItemMapper itemMapper, ProductMapper productMapper) {
         this.cartService = cartService;
         this.itemMapper = itemMapper;
+        this.productMapper = productMapper;
     }
 
     private String extractUsernameFromToken(String token) {
@@ -55,28 +61,33 @@ public class CartController {
                 BigDecimal subtotal = item.getListPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
                 totalPrice = totalPrice.add(subtotal);
 
-                Object itemObj = new Object() {
-                    public String itemId = cartItem.getItemId();
-                    public String productId = item.getProductId();
-                    public String productName = "Product"; // Should get from Product entity
-                    public int quantity = cartItem.getQuantity();
-                    public BigDecimal listPrice = item.getListPrice();
-                    public BigDecimal subtotal = subtotal;
-                    public String attribute1 = item.getAttribute1();
-                };
+                // Get product name
+                String productName = "Unknown Product";
+                Product product = productMapper.selectById(item.getProductId());
+                if (product != null) {
+                    productName = product.getName();
+                }
+
+                Map<String, Object> itemObj = new LinkedHashMap<>();
+                itemObj.put("itemId", cartItem.getItemId());
+                itemObj.put("productId", item.getProductId());
+                itemObj.put("productName", productName);
+                itemObj.put("quantity", cartItem.getQuantity());
+                itemObj.put("listPrice", item.getListPrice());
+                itemObj.put("subtotal", subtotal);
+                itemObj.put("attribute1", item.getAttribute1());
                 items.add(itemObj);
             }
         }
 
-        Object response = new Object() {
-            public int cartId = cart.getCartId();
-            public String userId = cart.getUserId();
-            public List<Object> items = items;
-            public int totalItems = cartItems.size();
-            public BigDecimal totalPrice = totalPrice;
-            public String createTime = cart.getCreateTime();
-            public String updateTime = cart.getUpdateTime();
-        };
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("cartId", cart.getCartId());
+        response.put("userId", cart.getUserId());
+        response.put("items", items);
+        response.put("totalItems", cartItems.size());
+        response.put("totalPrice", totalPrice);
+        response.put("createTime", cart.getCreateTime());
+        response.put("updateTime", cart.getUpdateTime());
 
         return ApiResponse.success(response);
     }
@@ -99,13 +110,12 @@ public class CartController {
         Item item = itemMapper.selectById(request.getItemId());
         BigDecimal subtotal = item != null ? item.getListPrice().multiply(BigDecimal.valueOf(request.getQuantity())) : BigDecimal.ZERO;
 
-        Object response = new Object() {
-            public int cartId = 1; // Should get from cart
-            public String itemId = request.getItemId();
-            public int quantity = request.getQuantity();
-            public BigDecimal listPrice = item != null ? item.getListPrice() : BigDecimal.ZERO;
-            public BigDecimal subtotal = subtotal;
-        };
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("cartId", 1); // Should get from cart
+        response.put("itemId", request.getItemId());
+        response.put("quantity", request.getQuantity());
+        response.put("listPrice", item != null ? item.getListPrice() : BigDecimal.ZERO);
+        response.put("subtotal", subtotal);
 
         return ApiResponse.created("Item added to cart successfully", response);
     }
@@ -129,12 +139,11 @@ public class CartController {
         Item item = itemMapper.selectById(itemId);
         BigDecimal subtotal = item != null ? item.getListPrice().multiply(BigDecimal.valueOf(request.getQuantity())) : BigDecimal.ZERO;
 
-        Object response = new Object() {
-            public String updatedItemId = itemId;
-            public int quantity = request.getQuantity();
-            public BigDecimal listPrice = item != null ? item.getListPrice() : BigDecimal.ZERO;
-            public BigDecimal subtotal = subtotal;
-        };
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("updatedItemId", itemId);
+        response.put("quantity", request.getQuantity());
+        response.put("listPrice", item != null ? item.getListPrice() : BigDecimal.ZERO);
+        response.put("subtotal", subtotal);
 
         return ApiResponse.success("Cart item updated successfully", response);
     }
@@ -149,7 +158,7 @@ public class CartController {
         }
 
         cartService.removeItemFromCart(username, itemId);
-        return new ApiResponse<>(204, "Item removed from cart", null);
+        return ApiResponse.success("Item removed from cart", null);
     }
 
     @DeleteMapping
@@ -163,4 +172,3 @@ public class CartController {
         return ApiResponse.success("Cart cleared successfully", null);
     }
 }
-
