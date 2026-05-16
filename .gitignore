@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+API_USAGE_GUIDE.md
+COMPLETION_CHECKLIST.md
+PROJECT_SUMMARY.md
+QUICK_START.md
