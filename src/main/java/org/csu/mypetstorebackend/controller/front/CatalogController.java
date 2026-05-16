@@ -73,15 +73,25 @@ public class CatalogController {
      * 获取商品详情（包含该商品下的所有SKU）
      */
     @GetMapping("/products/{productId}")
-    public ApiResponse<Product> getProductDetail(@PathVariable String productId) {
+    public ApiResponse<Map<String, Object>> getProductDetail(@PathVariable String productId) {
         Product product = catalogService.getProductById(productId);
         if (product == null) {
             return ApiResponse.notFound("Product not found with id: " + productId);
         }
 
-        // The Product entity should have items field, or we need to create a DTO
-        // For now, returning the product directly. In production, consider creating a ProductDetailDTO
-        return ApiResponse.success(product);
+        List<Item> items = product.getItems() != null ? product.getItems() : catalogService.getItemsByProductId(productId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", product.getId());
+        response.put("productId", product.getProductId());
+        response.put("categoryId", product.getCategoryId());
+        response.put("name", product.getName());
+        response.put("description", product.getDescription());
+        response.put("items", items);
+        response.put("createTime", product.getCreateTime());
+        response.put("updateTime", product.getUpdateTime());
+
+        return ApiResponse.success(response);
     }
 
     // ==================== SKU相关接口 ====================
@@ -148,5 +158,3 @@ public class CatalogController {
         return ApiResponse.success(result);
     }
 }
-
-

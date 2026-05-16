@@ -10,9 +10,8 @@ import org.csu.mypetstorebackend.persistence.CategoryMapper;
 import org.csu.mypetstorebackend.persistence.ItemMapper;
 import org.csu.mypetstorebackend.persistence.ProductMapper;
 import org.csu.mypetstorebackend.service.CatalogService;
+import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service("catalogService")
@@ -28,7 +27,19 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+        return TimeUtil.currentMysqlDateTime();
+    }
+
+    private Product attachItems(Product product) {
+        if (product != null) {
+            product.setItems(getItemsByProductId(product.getProductId()));
+        }
+        return product;
+    }
+
+    private List<Product> attachItems(List<Product> products) {
+        products.forEach(this::attachItems);
+        return products;
     }
 
     // Category Methods
@@ -75,7 +86,7 @@ public class CatalogServiceImpl implements CatalogService {
     public List<Product> getProductsByCategory(String categoryId) {
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("category", categoryId);
-        return productMapper.selectList(queryWrapper);
+        return attachItems(productMapper.selectList(queryWrapper));
     }
 
     @Override
@@ -91,14 +102,14 @@ public class CatalogServiceImpl implements CatalogService {
             }
         }
         Page<Product> result = productMapper.selectPage(pageObj, queryWrapper);
-        return new PageResponse<>(result.getTotal(), page, pageSize, result.getRecords());
+        return new PageResponse<>(result.getTotal(), page, pageSize, attachItems(result.getRecords()));
     }
 
     @Override
     public Product getProductById(String productId) {
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("productid", productId);
-        return productMapper.selectOne(queryWrapper);
+        return attachItems(productMapper.selectOne(queryWrapper));
     }
 
     @Override
@@ -113,7 +124,9 @@ public class CatalogServiceImpl implements CatalogService {
     public Product updateProduct(String productId, Product product) {
         product.setProductId(productId);
         product.setUpdateTime(getCurrentTimestamp());
-        productMapper.updateById(product);
+        QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("productid", productId);
+        productMapper.update(product, queryWrapper);
         return product;
     }
 
@@ -128,12 +141,14 @@ public class CatalogServiceImpl implements CatalogService {
     public PageResponse<Product> searchProducts(String keyword, String categoryId, int page, int pageSize) {
         Page<Product> pageObj = new Page<>(page, pageSize);
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("name", keyword).or().like("descn", keyword);
+        if (keyword != null && !keyword.isEmpty()) {
+            queryWrapper.and(q -> q.like("name", keyword).or().like("descn", keyword));
+        }
         if (categoryId != null && !categoryId.isEmpty()) {
-            queryWrapper.and(q -> q.eq("category", categoryId));
+            queryWrapper.eq("category", categoryId);
         }
         Page<Product> result = productMapper.selectPage(pageObj, queryWrapper);
-        return new PageResponse<>(result.getTotal(), page, pageSize, result.getRecords());
+        return new PageResponse<>(result.getTotal(), page, pageSize, attachItems(result.getRecords()));
     }
 
     // Item Methods
@@ -163,7 +178,9 @@ public class CatalogServiceImpl implements CatalogService {
     public Item updateItem(String itemId, Item item) {
         item.setItemId(itemId);
         item.setUpdateTime(getCurrentTimestamp());
-        itemMapper.updateById(item);
+        QueryWrapper<Item> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("itemid", itemId);
+        itemMapper.update(item, queryWrapper);
         return item;
     }
 
@@ -188,4 +205,3 @@ public class CatalogServiceImpl implements CatalogService {
         return new PageResponse<>(result.getTotal(), page, pageSize, result.getRecords());
     }
 }
-

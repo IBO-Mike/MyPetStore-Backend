@@ -3,12 +3,19 @@ package org.csu.mypetstorebackend.controller.order;
 import org.csu.mypetstorebackend.common.ApiResponse;
 import org.csu.mypetstorebackend.common.PageResponse;
 import org.csu.mypetstorebackend.dto.OrderRequest;
+import org.csu.mypetstorebackend.entity.Item;
 import org.csu.mypetstorebackend.entity.Orders;
 import org.csu.mypetstorebackend.entity.LineItem;
+import org.csu.mypetstorebackend.entity.Product;
+import org.csu.mypetstorebackend.entity.CartItem;
+import org.csu.mypetstorebackend.service.CartService;
+import org.csu.mypetstorebackend.service.CatalogService;
 import org.csu.mypetstorebackend.service.OrderService;
 import org.csu.mypetstorebackend.utils.JwtUtil;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +24,13 @@ import java.util.Map;
 @RequestMapping("/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final CatalogService catalogService;
+    private final CartService cartService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, CatalogService catalogService, CartService cartService) {
         this.orderService = orderService;
+        this.catalogService = catalogService;
+        this.cartService = cartService;
     }
 
     private String extractUsernameFromToken(String token) {
@@ -48,6 +59,44 @@ public class OrderController {
         }
     }
 
+    private Map<String, Object> buildOrderSummary(Orders order) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("orderId", order.getOrderId());
+        response.put("userId", order.getUserId());
+        response.put("orderDate", order.getOrderDate());
+        response.put("totalPrice", order.getTotalPrice());
+        response.put("status", convertOrderStatusToString(order.getOrderStatus()));
+        response.put("billToFirstName", order.getBillToFirstName());
+        response.put("billToLastName", order.getBillToLastName());
+        response.put("courier", order.getCourier());
+        response.put("createTime", order.getCreateTime());
+        return response;
+    }
+
+    private Map<String, Object> buildLineItemResponse(LineItem lineItem) {
+        Item item = catalogService.getItemById(lineItem.getItemId());
+        Product product = item != null ? catalogService.getProductById(item.getProductId()) : null;
+        BigDecimal unitPrice = lineItem.getUnitPrice() != null ? lineItem.getUnitPrice() : BigDecimal.ZERO;
+        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(lineItem.getQuantity()));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("lineNumber", lineItem.getLineNumber());
+        response.put("itemId", lineItem.getItemId());
+        response.put("productName", product != null ? product.getName() : null);
+        response.put("quantity", lineItem.getQuantity());
+        response.put("unitPrice", unitPrice);
+        response.put("subtotal", subtotal);
+        return response;
+    }
+
+    private List<Map<String, Object>> buildLineItemResponses(List<LineItem> lineItems) {
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (LineItem lineItem : lineItems) {
+            response.add(buildLineItemResponse(lineItem));
+        }
+        return response;
+    }
+
     @PostMapping
     public ApiResponse<Object> createOrder(
             @RequestHeader(value = "Authorization", required = false) String token,
@@ -55,6 +104,10 @@ public class OrderController {
         String username = extractUsernameFromToken(token);
         if (username == null) {
             return ApiResponse.unauthorized("Authentication required. Please sign in first.");
+        }
+        List<CartItem> cartItems = cartService.getCartItems(username);
+        if (cartItems.isEmpty()) {
+            return ApiResponse.badRequest("Cannot create an order from an empty cart");
         }
 
         Orders order = new Orders();
@@ -76,6 +129,9 @@ public class OrderController {
         order.setShipCountry(request.getShipCountry());
         order.setCreditCard(request.getCreditCard());
         order.setCardType(request.getCardType());
+        order.setExpiryDate("12/30");
+        order.setCourier("UPS");
+        order.setLocale("zh_CN");
         order.setOrderStatus(0); // pending
 
         Orders created = orderService.createOrder(username, order);
@@ -92,14 +148,14 @@ public class OrderController {
         response.put("shipToLastName", created.getShipToLastName());
         response.put("cardType", created.getCardType());
         response.put("status", convertOrderStatusToString(created.getOrderStatus()));
-        response.put("lineItems", lineItems);
+        response.put("lineItems", buildLineItemResponses(lineItems));
         response.put("createTime", created.getCreateTime());
 
         return ApiResponse.created("Order created successfully", response);
     }
 
     @GetMapping
-    public ApiResponse<PageResponse<Orders>> getMyOrders(
+    public ApiResponse<PageResponse<Map<String, Object>>> getMyOrders(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
@@ -110,7 +166,11 @@ public class OrderController {
         }
 
         PageResponse<Orders> result = orderService.getOrdersByUserId(username, page, pageSize, status);
-        return ApiResponse.success(result);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (Orders order : result.getItems()) {
+            items.add(buildOrderSummary(order));
+        }
+        return ApiResponse.success(new PageResponse<>(result.getTotal(), result.getPage(), result.getPageSize(), items));
     }
 
     @GetMapping("/{orderId}")
@@ -125,6 +185,9 @@ public class OrderController {
         Orders order = orderService.getOrderById(orderId);
         if (order == null) {
             return ApiResponse.notFound("Order not found");
+        }
+        if (!username.equals(order.getUserId())) {
+            return ApiResponse.forbidden("You do not have permission to view this order");
         }
 
         List<LineItem> lineItems = orderService.getOrderLineItems(orderId);
@@ -153,7 +216,7 @@ public class OrderController {
         response.put("shipCountry", order.getShipCountry());
         response.put("courier", order.getCourier());
         response.put("cardType", order.getCardType());
-        response.put("lineItems", lineItems);
+        response.put("lineItems", buildLineItemResponses(lineItems));
         response.put("createTime", order.getCreateTime());
 
         return ApiResponse.success(response);
@@ -171,6 +234,9 @@ public class OrderController {
         Orders order = orderService.getOrderById(orderId);
         if (order == null) {
             return ApiResponse.notFound("Order not found");
+        }
+        if (!username.equals(order.getUserId())) {
+            return ApiResponse.forbidden("You do not have permission to cancel this order");
         }
 
         // Check if order status is pending (only pending orders can be cancelled)

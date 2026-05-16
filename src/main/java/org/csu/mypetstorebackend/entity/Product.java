@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @TableName("product")
 public class Product {
@@ -23,4 +25,7 @@ public class Product {
     @TableField("update_time")
     private String updateTime;
     private int deleted;
+
+    @TableField(exist = false)
+    private List<Item> items;
 }

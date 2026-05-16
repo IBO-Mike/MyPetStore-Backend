@@ -4,10 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.csu.mypetstorebackend.entity.Account;
 import org.csu.mypetstorebackend.persistence.AccountMapper;
 import org.csu.mypetstorebackend.service.AccountService;
+import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Service("accountService")
 public class AccountServiceImpl implements AccountService {
@@ -18,7 +16,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+        return TimeUtil.currentMysqlDateTime();
     }
 
     @Override
@@ -35,17 +33,37 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account register(String username, String password) {
+        String normalizedUsername = username == null ? null : username.trim();
+        if (normalizedUsername == null || normalizedUsername.isEmpty()
+                || password == null || password.trim().isEmpty()) {
+            return null;
+        }
+
         // Check if username already exists
         QueryWrapper<Account> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userid", username);
+        queryWrapper.eq("userid", normalizedUsername);
         if (accountMapper.selectOne(queryWrapper) != null) {
             return null; // Username already exists
         }
 
         Account account = new Account();
-        account.setUsername(username);
+        account.setUsername(normalizedUsername);
         account.setPassword(password);
-        account.setStatus("active");
+        account.setStatus("OK");
+        account.setEmail("");
+        account.setFirstName("");
+        account.setLastName("");
+        account.setAddress1("");
+        account.setAddress2("");
+        account.setCity("");
+        account.setState("");
+        account.setZip("");
+        account.setCountry("");
+        account.setPhone("");
+        account.setLanguagePrefer("English");
+        account.setFavoriteCategory("DOGS");
+        account.setMyListOption(1);
+        account.setBannerOption(1);
         account.setCreateTime(getCurrentTimestamp());
         account.setUpdateTime(getCurrentTimestamp());
 
@@ -81,4 +99,3 @@ public class AccountServiceImpl implements AccountService {
         return true;
     }
 }
-

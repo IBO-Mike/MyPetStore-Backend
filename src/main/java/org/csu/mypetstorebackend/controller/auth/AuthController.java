@@ -45,15 +45,16 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     public ApiResponse<Object> signUp(@RequestBody RegisterRequest request) {
-        if (request.getUsername() == null || request.getPassword() == null) {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()
+                || request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             return ApiResponse.badRequest("Username and password are required");
         }
 
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
+        if (request.getConfirmPassword() == null || !request.getPassword().equals(request.getConfirmPassword())) {
             return ApiResponse.badRequest("Passwords do not match");
         }
 
-        Account account = accountService.register(request.getUsername(), request.getPassword());
+        Account account = accountService.register(request.getUsername().trim(), request.getPassword());
         if (account == null) {
             return ApiResponse.badRequest("Username already exists");
         }
@@ -80,4 +81,3 @@ public class AuthController {
         return ApiResponse.success("Logout successful", null);
     }
 }
-

@@ -8,12 +8,11 @@ import org.csu.mypetstorebackend.persistence.AccountMapper;
 import org.csu.mypetstorebackend.service.CatalogService;
 import org.csu.mypetstorebackend.service.OrderService;
 import org.csu.mypetstorebackend.utils.JwtUtil;
+import org.csu.mypetstorebackend.utils.TimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -324,7 +323,7 @@ public class AdminController {
         Object response = new Object() {
             public int orderId = order.getOrderId();
             public String status = "shipped";
-            public String updateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+            public String updateTime = TimeUtil.currentMysqlDateTime();
         };
 
         return ApiResponse.success("Order shipped successfully", response);
@@ -458,7 +457,6 @@ public class AdminController {
     }
 
     private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+        return TimeUtil.currentMysqlDateTime();
     }
 }
-

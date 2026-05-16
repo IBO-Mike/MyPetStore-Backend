@@ -6,10 +6,9 @@ import org.csu.mypetstorebackend.entity.CartItem;
 import org.csu.mypetstorebackend.persistence.CartItemMapper;
 import org.csu.mypetstorebackend.persistence.CartMapper;
 import org.csu.mypetstorebackend.service.CartService;
+import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
 
@@ -24,7 +23,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private String getCurrentTimestamp() {
-        return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + "Z";
+        return TimeUtil.currentMysqlDateTime();
     }
 
     @Override
@@ -135,4 +134,3 @@ public class CartServiceImpl implements CartService {
         return cartItemMapper.selectList(queryWrapper);
     }
 }
-
