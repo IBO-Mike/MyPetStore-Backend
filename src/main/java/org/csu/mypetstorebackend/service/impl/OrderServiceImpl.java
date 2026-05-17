@@ -83,15 +83,27 @@ public class OrderServiceImpl implements OrderService {
         return status == null ? 0 : status.getStatus();
     }
 
-    private void appendOrderStatus(int orderId, int status) {
-        OrderStatus orderStatus = new OrderStatus();
-        orderStatus.setOrderId(orderId);
-        orderStatus.setLineNumber(0);
+    private void saveOrderStatus(int orderId, int status) {
+        QueryWrapper<OrderStatus> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("orderid", orderId).eq("linenum", 0).last("LIMIT 1");
+        OrderStatus orderStatus = orderStatusMapper.selectOne(queryWrapper);
+
+        if (orderStatus == null) {
+            orderStatus = new OrderStatus();
+            orderStatus.setOrderId(orderId);
+            orderStatus.setLineNumber(0);
+            orderStatus.setCreateTime(getCurrentTimestamp());
+        }
+
         orderStatus.setTimestamp(new java.util.Date());
         orderStatus.setStatus(status);
-        orderStatus.setCreateTime(getCurrentTimestamp());
         orderStatus.setUpdateTime(getCurrentTimestamp());
-        orderStatusMapper.insert(orderStatus);
+
+        if (orderStatus.getId() == null) {
+            orderStatusMapper.insert(orderStatus);
+        } else {
+            orderStatusMapper.updateById(orderStatus);
+        }
     }
 
     private void attachLatestStatus(Orders order) {
@@ -136,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
             lineItemMapper.insert(lineItem);
         }
 
-        appendOrderStatus(order.getOrderId(), 0);
+        saveOrderStatus(order.getOrderId(), 0);
         order.setOrderStatus(0);
 
         // Clear the cart after order creation
@@ -198,7 +210,7 @@ public class OrderServiceImpl implements OrderService {
         if (order != null) {
             int statusValue = convertStatusToInt(status);
             if (statusValue >= 0) {
-                appendOrderStatus(orderId, statusValue);
+                saveOrderStatus(orderId, statusValue);
                 order.setOrderStatus(statusValue);
             }
             order.setUpdateTime(getCurrentTimestamp());
@@ -211,7 +223,7 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(int orderId) {
         Orders order = getOrderById(orderId);
         if (order != null) {
-            appendOrderStatus(orderId, 3);
+            saveOrderStatus(orderId, 3);
             order.setOrderStatus(3);
             order.setUpdateTime(getCurrentTimestamp());
             ordersMapper.updateById(order);
@@ -234,7 +246,7 @@ public class OrderServiceImpl implements OrderService {
     public void shipOrder(int orderId) {
         Orders order = getOrderById(orderId);
         if (order != null) {
-            appendOrderStatus(orderId, 1);
+            saveOrderStatus(orderId, 1);
             order.setOrderStatus(1);
             order.setUpdateTime(getCurrentTimestamp());
             ordersMapper.updateById(order);

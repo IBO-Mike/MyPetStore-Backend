@@ -1,6 +1,7 @@
 package org.csu.mypetstorebackend.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.csu.mypetstorebackend.entity.Account;
 import org.csu.mypetstorebackend.persistence.AccountMapper;
 import org.csu.mypetstorebackend.service.AccountService;
@@ -32,12 +33,12 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Account register(String username, String password) {
-        String normalizedUsername = username == null ? null : username.trim();
-        if (normalizedUsername == null || normalizedUsername.isEmpty()
-                || password == null || password.trim().isEmpty()) {
+    public Account register(Account account) {
+        if (account == null || account.getUsername() == null || account.getUsername().trim().isEmpty()
+                || account.getPassword() == null || account.getPassword().trim().isEmpty()) {
             return null;
         }
+        String normalizedUsername = account.getUsername().trim();
 
         // Check if username already exists
         QueryWrapper<Account> queryWrapper = new QueryWrapper<>();
@@ -46,22 +47,9 @@ public class AccountServiceImpl implements AccountService {
             return null; // Username already exists
         }
 
-        Account account = new Account();
         account.setUsername(normalizedUsername);
-        account.setPassword(password);
+        account.setPassword(account.getPassword().trim());
         account.setStatus("OK");
-        account.setEmail("");
-        account.setFirstName("");
-        account.setLastName("");
-        account.setAddress1("");
-        account.setAddress2("");
-        account.setCity("");
-        account.setState("");
-        account.setZip("");
-        account.setCountry("");
-        account.setPhone("");
-        account.setLanguagePrefer("English");
-        account.setFavoriteCategory("DOGS");
         account.setMyListOption(1);
         account.setBannerOption(1);
         account.setCreateTime(getCurrentTimestamp());
@@ -88,14 +76,16 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean changePassword(String username, String oldPassword, String newPassword) {
-        Account account = getAccountByUsername(username);
-        if (account == null || !account.getPassword().equals(oldPassword)) {
+        if (username == null || oldPassword == null || newPassword == null) {
             return false;
         }
 
-        account.setPassword(newPassword);
-        account.setUpdateTime(getCurrentTimestamp());
-        accountMapper.updateById(account);
-        return true;
+        UpdateWrapper<Account> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("userid", username)
+                .eq("password", oldPassword)
+                .set("password", newPassword)
+                .set("update_time", getCurrentTimestamp());
+
+        return accountMapper.update(null, updateWrapper) > 0;
     }
 }
