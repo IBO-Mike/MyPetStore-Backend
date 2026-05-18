@@ -9,10 +9,7 @@ import lombok.Data;
 @Data
 @TableName("account")
 public class Account {
-    //account
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
-    @TableField("userid")
+    @TableId(value = "userid", type = IdType.INPUT)
     private String username;
     private String email;
     @TableField("firstname")
@@ -29,21 +26,14 @@ public class Account {
     private String zip;
     private String country;
     private String phone;
-    //profile
-    @TableField("langpref")
-    private String languagePrefer;
-    @TableField("favcategory")
+    @TableField(exist = false)
+    private String languagePreference;
+    @TableField(exist = false)
     private String favoriteCategory;
-    @TableField("mylistopt")
+    @TableField(exist = false)
     private int myListOption;
-    @TableField("banneropt")
+    @TableField(exist = false)
     private int bannerOption;
-    //signOn
+    @TableField(exist = false)
     private String password;
-
-    @TableField("create_time")
-    private String createTime;
-    @TableField("update_time")
-    private String updateTime;
-    private int deleted;
 }

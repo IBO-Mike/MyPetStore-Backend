@@ -69,7 +69,6 @@ public class OrderController {
         response.put("billToFirstName", order.getBillToFirstName());
         response.put("billToLastName", order.getBillToLastName());
         response.put("courier", order.getCourier());
-        response.put("createTime", order.getCreateTime());
         return response;
     }
 
@@ -149,7 +148,6 @@ public class OrderController {
         response.put("cardType", created.getCardType());
         response.put("status", convertOrderStatusToString(created.getOrderStatus()));
         response.put("lineItems", buildLineItemResponses(lineItems));
-        response.put("createTime", created.getCreateTime());
 
         return ApiResponse.created("Order created successfully", response);
     }
@@ -217,7 +215,6 @@ public class OrderController {
         response.put("courier", order.getCourier());
         response.put("cardType", order.getCardType());
         response.put("lineItems", buildLineItemResponses(lineItems));
-        response.put("createTime", order.getCreateTime());
 
         return ApiResponse.success(response);
     }

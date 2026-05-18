@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 @Data
 @TableName("lineitem")
 public class LineItem {
-    @TableId(type = IdType.AUTO)
-    private Integer id;
-    @TableField("orderid")
+    @TableId(value = "orderid", type = IdType.INPUT)
     private int orderId;
     @TableField("linenum")
     private int lineNumber;
@@ -23,9 +21,4 @@ public class LineItem {
     private int quantity;
     @TableField("unitprice")
     private BigDecimal unitPrice;
-    @TableField("create_time")
-    private String createTime;
-    @TableField("update_time")
-    private String updateTime;
-    private int deleted;
 }

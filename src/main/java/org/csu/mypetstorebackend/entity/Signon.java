@@ -7,10 +7,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("inventory")
-public class ItemQuantity {
-    @TableId(value = "itemid", type = IdType.INPUT)
-    private String itemId;
-    @TableField("qty")
-    private Integer quantity;
+@TableName("signon")
+public class Signon {
+    @TableId(value = "username", type = IdType.INPUT)
+    private String username;
+    @TableField("password")
+    private String password;
 }

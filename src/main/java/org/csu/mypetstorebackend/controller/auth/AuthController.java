@@ -45,10 +45,10 @@ public class AuthController {
             return ApiResponse.unauthorized("Username or password incorrect");
         }
 
-        String token = JwtUtil.generateToken(account.getUsername(), account.getId());
+        String token = JwtUtil.generateToken(account.getUsername(), account.getUsername());
         LoginResponse response = new LoginResponse(
                 token,
-                account.getId(),
+                account.getUsername(),
                 account.getUsername(),
                 account.getEmail(),
                 account.getFirstName(),
@@ -108,7 +108,7 @@ public class AuthController {
         newAccount.setState(trim(request.getState()));
         newAccount.setZip(trim(request.getZip()));
         newAccount.setCountry(trim(request.getCountry()));
-        newAccount.setLanguagePrefer(isBlank(request.getLanguagePreference()) ? "English" : trim(request.getLanguagePreference()));
+        newAccount.setLanguagePreference(isBlank(request.getLanguagePreference()) ? "English" : trim(request.getLanguagePreference()));
         newAccount.setFavoriteCategory(isBlank(request.getFavoriteCategory()) ? "DOGS" : trim(request.getFavoriteCategory()));
 
         Account account = accountService.register(newAccount);
@@ -117,7 +117,7 @@ public class AuthController {
         }
 
         return ApiResponse.created("Registration successful", new Object() {
-            public int userId = account.getId();
+            public String userId = account.getUsername();
             public String username = account.getUsername();
             public String email = account.getEmail();
             public String status = account.getStatus();

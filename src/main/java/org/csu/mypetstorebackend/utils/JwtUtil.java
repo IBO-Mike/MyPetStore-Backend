@@ -15,7 +15,7 @@ public class JwtUtil {
     /**
      * 生成Token
      */
-    public static String generateToken(String username, int userId) {
+    public static String generateToken(String username, String userId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", username);
         claims.put("userId", userId);
@@ -81,18 +81,15 @@ public class JwtUtil {
     /**
      * 从Token中提取userId
      */
-    public static Integer extractUserId(String token) {
+    public static String extractUserId(String token) {
         try {
             String[] parts = token.split("\\.");
             String payload = parts[1];
             String payloadJson = new String(Base64.getDecoder().decode(payload));
             
-            int start = payloadJson.indexOf("\"userId\":") + 9;
-            int end = payloadJson.indexOf(",", start);
-            if (end == -1) {
-                end = payloadJson.indexOf("}", start);
-            }
-            return Integer.parseInt(payloadJson.substring(start, end).trim());
+            int start = payloadJson.indexOf("\"userId\":\"") + 11;
+            int end = payloadJson.indexOf("\"", start);
+            return payloadJson.substring(start, end);
         } catch (Exception e) {
             return null;
         }

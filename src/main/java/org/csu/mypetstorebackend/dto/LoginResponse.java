@@ -5,7 +5,7 @@ package org.csu.mypetstorebackend.dto;
  */
 public class LoginResponse {
     private String token;
-    private int userId;
+    private String userId;
     private String username;
     private String email;
     private String firstName;
@@ -14,7 +14,7 @@ public class LoginResponse {
 
     public LoginResponse() {}
 
-    public LoginResponse(String token, int userId, String username, String email, String firstName, String lastName, String favoriteCategory) {
+    public LoginResponse(String token, String userId, String username, String email, String firstName, String lastName, String favoriteCategory) {
         this.token = token;
         this.userId = userId;
         this.username = username;
@@ -32,11 +32,11 @@ public class LoginResponse {
         this.token = token;
     }
 
-    public int getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

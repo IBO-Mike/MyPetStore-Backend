@@ -5,11 +5,13 @@ import org.csu.mypetstorebackend.common.PageResponse;
 import org.csu.mypetstorebackend.dto.*;
 import org.csu.mypetstorebackend.entity.*;
 import org.csu.mypetstorebackend.persistence.AccountMapper;
+import org.csu.mypetstorebackend.persistence.SignonMapper;
 import org.csu.mypetstorebackend.service.CatalogService;
 import org.csu.mypetstorebackend.service.OrderService;
 import org.csu.mypetstorebackend.utils.JwtUtil;
 import org.csu.mypetstorebackend.utils.TimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,11 +24,13 @@ public class AdminController {
     private final CatalogService catalogService;
     private final OrderService orderService;
     private final AccountMapper accountMapper;
+    private final SignonMapper signonMapper;
 
-    public AdminController(CatalogService catalogService, OrderService orderService, AccountMapper accountMapper) {
+    public AdminController(CatalogService catalogService, OrderService orderService, AccountMapper accountMapper, SignonMapper signonMapper) {
         this.catalogService = catalogService;
         this.orderService = orderService;
         this.accountMapper = accountMapper;
+        this.signonMapper = signonMapper;
     }
 
     private String extractUsernameFromToken(String token) {
@@ -323,7 +327,6 @@ public class AdminController {
         Object response = new Object() {
             public int orderId = order.getOrderId();
             public String status = "shipped";
-            public String updateTime = TimeUtil.currentMysqlDateTime();
         };
 
         return ApiResponse.success("Order shipped successfully", response);
@@ -443,10 +446,20 @@ public class AdminController {
             return ApiResponse.badRequest("New password is required");
         }
 
-        // In production, hash the password before saving
-        account.setPassword(newPassword);
-        account.setUpdateTime(getCurrentTimestamp());
-        accountMapper.updateById(account);
+        QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
+        signonQuery.eq("username", username);
+        Signon signon = signonMapper.selectOne(signonQuery);
+
+        if (signon == null) {
+            signon = new Signon();
+            signon.setUsername(username);
+            signon.setPassword(newPassword);
+            signonMapper.insert(signon);
+        } else {
+            UpdateWrapper<Signon> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("username", username).set("password", newPassword);
+            signonMapper.update(null, updateWrapper);
+        }
 
         Object response = new Object() {
             public String updatedUsername = username;
@@ -454,9 +467,5 @@ public class AdminController {
         };
 
         return ApiResponse.success("Password reset successfully", response);
-    }
-
-    private String getCurrentTimestamp() {
-        return TimeUtil.currentMysqlDateTime();
     }
 }

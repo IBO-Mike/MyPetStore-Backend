@@ -34,7 +34,7 @@ public class AccountController {
 
     private Map<String, Object> buildProfileResponse(Account account) {
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("userId", account.getId());
+        response.put("userId", account.getUsername());
         response.put("username", account.getUsername());
         response.put("email", account.getEmail());
         response.put("firstName", account.getFirstName());
@@ -47,12 +47,10 @@ public class AccountController {
         response.put("zip", account.getZip());
         response.put("country", account.getCountry());
         response.put("phone", account.getPhone());
-        response.put("languagePreference", account.getLanguagePrefer());
+        response.put("languagePreference", account.getLanguagePreference());
         response.put("favoriteCategory", account.getFavoriteCategory());
         response.put("myListOption", account.getMyListOption());
         response.put("bannerOption", account.getBannerOption());
-        response.put("createTime", account.getCreateTime());
-        response.put("updateTime", account.getUpdateTime());
         return response;
     }
 
@@ -111,7 +109,7 @@ public class AccountController {
         if (request.getState() != null) account.setState(normalizeRequired(request.getState()));
         if (request.getZip() != null) account.setZip(normalizeRequired(request.getZip()));
         if (request.getCountry() != null) account.setCountry(normalizeRequired(request.getCountry()));
-        if (request.getLanguagePreference() != null) account.setLanguagePrefer(normalizeRequired(request.getLanguagePreference()));
+        if (request.getLanguagePreference() != null) account.setLanguagePreference(normalizeRequired(request.getLanguagePreference()));
         if (request.getFavoriteCategory() != null) account.setFavoriteCategory(normalizeOptional(request.getFavoriteCategory()));
 
         Account updated = accountService.updateAccount(username, account);

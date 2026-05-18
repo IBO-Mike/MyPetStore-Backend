@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 @Data
 @TableName("item")
 public class Item {
-    @TableId(type = IdType.AUTO)
-    private Integer id;
-    @TableField("itemid")
+    @TableId(value = "itemid", type = IdType.INPUT)
     private String itemId;
     @TableField("productid")
     private String productId;
@@ -34,9 +32,4 @@ public class Item {
     private String attribute4;
     @TableField("attr5")
     private String attribute5;
-    @TableField("create_time")
-    private String createTime;
-    @TableField("update_time")
-    private String updateTime;
-    private int deleted;
 }

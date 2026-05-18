@@ -82,14 +82,11 @@ public class CatalogController {
         List<Item> items = product.getItems() != null ? product.getItems() : catalogService.getItemsByProductId(productId);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("id", product.getId());
         response.put("productId", product.getProductId());
         response.put("categoryId", product.getCategoryId());
         response.put("name", product.getName());
         response.put("description", product.getDescription());
         response.put("items", items);
-        response.put("createTime", product.getCreateTime());
-        response.put("updateTime", product.getUpdateTime());
 
         return ApiResponse.success(response);
     }
@@ -106,11 +103,9 @@ public class CatalogController {
             return ApiResponse.notFound("Item not found with id: " + itemId);
         }
         
-        // Get associated product
         Product product = catalogService.getProductById(item.getProductId());
         
         Map<String, Object> response = new HashMap<>();
-        response.put("id", item.getId());
         response.put("itemId", item.getItemId());
         response.put("productId", item.getProductId());
         response.put("listPrice", item.getListPrice());
@@ -122,12 +117,9 @@ public class CatalogController {
         response.put("attribute3", item.getAttribute3());
         response.put("attribute4", item.getAttribute4());
         response.put("attribute5", item.getAttribute5());
-        response.put("createTime", item.getCreateTime());
-        response.put("updateTime", item.getUpdateTime());
         
         if (product != null) {
             Map<String, Object> productInfo = new HashMap<>();
-            productInfo.put("id", product.getId());
             productInfo.put("productId", product.getProductId());
             productInfo.put("categoryId", product.getCategoryId());
             productInfo.put("name", product.getName());

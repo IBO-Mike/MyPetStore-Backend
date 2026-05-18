@@ -114,8 +114,6 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public Product createProduct(Product product) {
-        product.setCreateTime(getCurrentTimestamp());
-        product.setUpdateTime(getCurrentTimestamp());
         productMapper.insert(product);
         return product;
     }
@@ -123,7 +121,6 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public Product updateProduct(String productId, Product product) {
         product.setProductId(productId);
-        product.setUpdateTime(getCurrentTimestamp());
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("productid", productId);
         productMapper.update(product, queryWrapper);
@@ -168,8 +165,6 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public Item createItem(Item item) {
-        item.setCreateTime(getCurrentTimestamp());
-        item.setUpdateTime(getCurrentTimestamp());
         itemMapper.insert(item);
         return item;
     }
@@ -177,7 +172,6 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public Item updateItem(String itemId, Item item) {
         item.setItemId(itemId);
-        item.setUpdateTime(getCurrentTimestamp());
         QueryWrapper<Item> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("itemid", itemId);
         itemMapper.update(item, queryWrapper);

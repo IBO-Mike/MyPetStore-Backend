@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service("orderService")
 public class OrderServiceImpl implements OrderService {
@@ -78,9 +79,31 @@ public class OrderServiceImpl implements OrderService {
 
     private int getLatestOrderStatus(int orderId) {
         QueryWrapper<OrderStatus> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("orderid", orderId).orderByDesc("timestamp").orderByDesc("id").last("LIMIT 1");
+        queryWrapper.eq("orderid", orderId).orderByDesc("timestamp").last("LIMIT 1");
         OrderStatus status = orderStatusMapper.selectOne(queryWrapper);
-        return status == null ? 0 : status.getStatus();
+        if (status == null) {
+            return 0;
+        }
+        String statusStr = status.getStatus();
+        if (statusStr == null) {
+            return 0;
+        }
+        switch (statusStr) {
+            case "P":
+            case "pending":
+                return 0;
+            case "S":
+            case "shipped":
+                return 1;
+            case "D":
+            case "delivered":
+                return 2;
+            case "C":
+            case "cancelled":
+                return 3;
+            default:
+                return 0;
+        }
     }
 
     private void saveOrderStatus(int orderId, int status) {
@@ -92,17 +115,35 @@ public class OrderServiceImpl implements OrderService {
             orderStatus = new OrderStatus();
             orderStatus.setOrderId(orderId);
             orderStatus.setLineNumber(0);
-            orderStatus.setCreateTime(getCurrentTimestamp());
         }
 
         orderStatus.setTimestamp(new java.util.Date());
-        orderStatus.setStatus(status);
-        orderStatus.setUpdateTime(getCurrentTimestamp());
+        String statusStr;
+        switch (status) {
+            case 0:
+                statusStr = "P";
+                break;
+            case 1:
+                statusStr = "S";
+                break;
+            case 2:
+                statusStr = "D";
+                break;
+            case 3:
+                statusStr = "C";
+                break;
+            default:
+                statusStr = "P";
+                break;
+        }
+        orderStatus.setStatus(statusStr);
 
-        if (orderStatus.getId() == null) {
+        if (orderStatus.getOrderId() == 0) {
             orderStatusMapper.insert(orderStatus);
         } else {
-            orderStatusMapper.updateById(orderStatus);
+            QueryWrapper<OrderStatus> updateWrapper = new QueryWrapper<>();
+            updateWrapper.eq("orderid", orderId).eq("linenum", 0);
+            orderStatusMapper.update(orderStatus, updateWrapper);
         }
     }
 
@@ -118,8 +159,6 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDate.now().format(DateTimeFormatter.ISO_DATE));
         order.setOrderId(new Random().nextInt(Integer.MAX_VALUE));
         order.setTotalPrice(BigDecimal.ZERO);
-        order.setCreateTime(getCurrentTimestamp());
-        order.setUpdateTime(getCurrentTimestamp());
 
         List<CartItem> cartItems = cartService.getCartItems(userId);
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -143,8 +182,6 @@ public class OrderServiceImpl implements OrderService {
             lineItem.setItemId(cartItem.getItemId());
             lineItem.setQuantity(cartItem.getQuantity());
             lineItem.setUnitPrice(item != null ? item.getListPrice() : BigDecimal.ZERO);
-            lineItem.setCreateTime(getCurrentTimestamp());
-            lineItem.setUpdateTime(getCurrentTimestamp());
             lineItemMapper.insert(lineItem);
         }
 
@@ -182,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
         records.forEach(this::attachLatestStatus);
         int statusValue = convertStatusToInt(status);
         if (statusValue >= 0) {
-            records = records.stream().filter(order -> order.getOrderStatus() == statusValue).toList();
+            records = records.stream().filter(order -> order.getOrderStatus() == statusValue).collect(Collectors.toList());
         }
         return new PageResponse<>(statusValue >= 0 ? records.size() : result.getTotal(), page, pageSize, records);
     }
@@ -199,7 +236,7 @@ public class OrderServiceImpl implements OrderService {
         records.forEach(this::attachLatestStatus);
         int statusValue = convertStatusToInt(status);
         if (statusValue >= 0) {
-            records = records.stream().filter(order -> order.getOrderStatus() == statusValue).toList();
+            records = records.stream().filter(order -> order.getOrderStatus() == statusValue).collect(Collectors.toList());
         }
         return new PageResponse<>(statusValue >= 0 ? records.size() : result.getTotal(), page, pageSize, records);
     }
@@ -213,8 +250,9 @@ public class OrderServiceImpl implements OrderService {
                 saveOrderStatus(orderId, statusValue);
                 order.setOrderStatus(statusValue);
             }
-            order.setUpdateTime(getCurrentTimestamp());
-            ordersMapper.updateById(order);
+            QueryWrapper<Orders> updateWrapper = new QueryWrapper<>();
+            updateWrapper.eq("orderid", orderId);
+            ordersMapper.update(order, updateWrapper);
         }
         return order;
     }
@@ -225,8 +263,9 @@ public class OrderServiceImpl implements OrderService {
         if (order != null) {
             saveOrderStatus(orderId, 3);
             order.setOrderStatus(3);
-            order.setUpdateTime(getCurrentTimestamp());
-            ordersMapper.updateById(order);
+            QueryWrapper<Orders> updateWrapper = new QueryWrapper<>();
+            updateWrapper.eq("orderid", orderId);
+            ordersMapper.update(order, updateWrapper);
         }
     }
 
@@ -248,8 +287,9 @@ public class OrderServiceImpl implements OrderService {
         if (order != null) {
             saveOrderStatus(orderId, 1);
             order.setOrderStatus(1);
-            order.setUpdateTime(getCurrentTimestamp());
-            ordersMapper.updateById(order);
+            QueryWrapper<Orders> updateWrapper = new QueryWrapper<>();
+            updateWrapper.eq("orderid", orderId);
+            ordersMapper.update(order, updateWrapper);
         }
     }
 

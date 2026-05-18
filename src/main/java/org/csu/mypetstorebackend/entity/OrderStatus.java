@@ -9,19 +9,12 @@ import lombok.Data;
 @Data
 @TableName("orderstatus")
 public class OrderStatus {
-    @TableId(type = IdType.AUTO)
-    private Integer id;
-    @TableField("orderid")
+    @TableId(value = "orderid", type = IdType.INPUT)
     private int orderId;
     @TableField("linenum")
     private int lineNumber;
     @TableField("timestamp")
     private java.util.Date timestamp;
     @TableField("status")
-    private int status;
-    @TableField("create_time")
-    private String createTime;
-    @TableField("update_time")
-    private String updateTime;
-    private int deleted;
+    private String status;
 }

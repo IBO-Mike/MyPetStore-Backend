@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 @Data
 @TableName("orders")
 public class Orders {
-    @TableId(type = IdType.AUTO)
-    private Integer id;
-    @TableField(value = "orderid")
+    @TableId(value = "orderid", type = IdType.INPUT)
     private int orderId;
     @TableField("userid")
     private String userId;
@@ -63,17 +61,10 @@ public class Orders {
     private String cardType;
     @TableField("locale")
     private String locale;
-    @TableField("create_time")
-    private String createTime;
-    @TableField("update_time")
-    private String updateTime;
-    private int deleted;
     
-    // 非数据库字段，用于显示订单状态
     @TableField(exist = false)
     private int orderStatus;
     
-    // 非数据库字段，用于存储订单项列表
     @TableField(exist = false)
     private java.util.List<LineItem> lineItems;
 }
