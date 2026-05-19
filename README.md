@@ -1,18 +1,18 @@
 # MyPetStore Backend
 
-MyPetStore 的后端项目，基于 Spring Boot 提供商品、用户、购物车、订单和后台管理相关 API。
+MyPetStore 的后端项目，基于 Spring Boot 提供商品、用户、购物车、订单、收藏、商品对比和后台管理相关 API。
 
 ## 技术栈
 
-- Java 21
-- Spring Boot 4
+- Java 8+（本地已用 JDK 21 验证）
+- Spring Boot 2.7.18
 - MyBatis-Plus
 - MySQL
 - Maven
 
 ## 环境要求
 
-- JDK 21
+- JDK 8 或更高版本
 - Maven
 - MySQL
 
@@ -31,12 +31,47 @@ spring.datasource.username=root
 spring.datasource.password=root
 ```
 
-运行前请确认本机 MySQL 中已存在 `mps` 数据库和项目所需表结构。
+如果你的 MySQL 用户名或密码不同，请修改 `src/main/resources/application.properties` 中的 datasource 配置。
+
+## 数据库初始化
+
+仓库内提供了初始化 SQL：
+
+```text
+jpetstore.sql       基础表结构和演示数据
+compare_schema.sql  收藏和商品对比扩展表
+```
+
+创建数据库：
+
+```bash
+mysql -u root -p
+```
+
+进入 MySQL 后执行：
+
+```sql
+CREATE DATABASE IF NOT EXISTS mps DEFAULT CHARACTER SET utf8;
+```
+
+回到项目目录后导入数据：
+
+```bash
+mysql -u root -p mps < jpetstore.sql
+mysql -u root -p mps < compare_schema.sql
+```
+
+如果本机 root 密码就是默认的 `root`，也可以使用：
+
+```bash
+mysql -u root -proot mps < jpetstore.sql
+mysql -u root -proot mps < compare_schema.sql
+```
 
 ## 本地运行
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 服务默认启动在：
@@ -48,7 +83,7 @@ http://localhost:1145
 ## 测试
 
 ```bash
-mvn test
+./mvnw test
 ```
 
 ## 主要模块
@@ -70,6 +105,18 @@ utils/          JWT、时间等工具类
 - `/catalog` 商品分类、商品和搜索
 - `/cart` 购物车
 - `/orders` 订单创建、查询和取消
+- `/favorite` 商品收藏
+- `/compare` 商品对比
 - `/admin` 后台管理
 
 前端开发服务器默认通过 `/api` 代理访问本服务。
+
+## 测试账号
+
+初始化数据包含以下测试账号：
+
+```text
+j2ee / j2ee
+ACID / ACID
+a / a
+```

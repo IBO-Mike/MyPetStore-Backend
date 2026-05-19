@@ -28,7 +28,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         }
 
         QueryWrapper<Favorite> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userid", userId).eq("productid", productId);
+        queryWrapper.eq("userid", userId).eq("productid", productId).orderByDesc("create_time").last("LIMIT 1");
         Favorite existing = favoriteMapper.selectOne(queryWrapper);
         if (existing != null) {
             return existing;
@@ -37,6 +37,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         Favorite favorite = new Favorite();
         favorite.setUserId(userId);
         favorite.setProductId(productId);
+        favorite.setCreateTime(getCurrentTimestamp());
 
         favoriteMapper.insert(favorite);
         return favorite;

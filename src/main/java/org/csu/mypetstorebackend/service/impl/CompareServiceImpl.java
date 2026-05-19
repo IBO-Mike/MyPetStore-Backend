@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.csu.mypetstorebackend.entity.Compare;
 import org.csu.mypetstorebackend.persistence.CompareMapper;
 import org.csu.mypetstorebackend.service.CompareService;
+import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class CompareServiceImpl implements CompareService {
         }
 
         QueryWrapper<Compare> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userid", userId).eq("productid", productId);
+        queryWrapper.eq("userid", userId).eq("productid", productId).orderByDesc("create_time").last("LIMIT 1");
         Compare existing = compareMapper.selectOne(queryWrapper);
         if (existing != null) {
             return existing;
@@ -32,6 +33,7 @@ public class CompareServiceImpl implements CompareService {
         Compare compare = new Compare();
         compare.setUserId(userId);
         compare.setProductId(productId);
+        compare.setCreateTime(TimeUtil.currentMysqlDateTime());
 
         compareMapper.insert(compare);
         return compare;
