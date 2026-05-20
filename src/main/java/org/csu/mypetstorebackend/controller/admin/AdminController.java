@@ -445,6 +445,8 @@ public class AdminController {
         if (newPassword == null || newPassword.isEmpty()) {
             return ApiResponse.badRequest("New password is required");
         }
+        account.setPassword(newPassword);
+        accountMapper.update(account, queryWrapper);
 
         QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
         signonQuery.eq("username", username);

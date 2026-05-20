@@ -8,6 +8,7 @@ import org.csu.mypetstorebackend.persistence.AccountMapper;
 import org.csu.mypetstorebackend.persistence.SignonMapper;
 import org.csu.mypetstorebackend.service.AccountService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("accountService")
 public class AccountServiceImpl implements AccountService {
@@ -21,17 +22,29 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account login(String username, String password) {
-        QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
-        signonQuery.eq("username", username);
-        Signon signon = signonMapper.selectOne(signonQuery);
+        if (username == null || password == null) {
+            return null;
+        }
+        String normalizedUsername = username.trim();
 
-        if (signon == null || !signon.getPassword().equals(password)) {
+        QueryWrapper<Account> accountQuery = new QueryWrapper<>();
+        accountQuery.eq("userid", normalizedUsername);
+        Account account = accountMapper.selectOne(accountQuery);
+        if (account == null) {
             return null;
         }
 
-        QueryWrapper<Account> accountQuery = new QueryWrapper<>();
-        accountQuery.eq("userid", username);
-        return accountMapper.selectOne(accountQuery);
+        QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
+        signonQuery.eq("username", normalizedUsername);
+        Signon signon = signonMapper.selectOne(signonQuery);
+
+        boolean signonMatches = signon != null && password.equals(signon.getPassword());
+        boolean accountMatches = password.equals(account.getPassword());
+        if (!signonMatches && !accountMatches) {
+            return null;
+        }
+
+        return account;
     }
 
     @Override
@@ -42,6 +55,11 @@ public class AccountServiceImpl implements AccountService {
         }
         String normalizedUsername = account.getUsername().trim();
 
+        QueryWrapper<Account> accountQuery = new QueryWrapper<>();
+        accountQuery.eq("userid", normalizedUsername);
+        if (accountMapper.selectOne(accountQuery) != null) {
+            return null;
+        }
         QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
         signonQuery.eq("username", normalizedUsername);
         if (signonMapper.selectOne(signonQuery) != null) {
@@ -54,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
         signonMapper.insert(signon);
 
         account.setUsername(normalizedUsername);
+        account.setPassword(account.getPassword().trim());
         account.setStatus("OK");
         account.setMyListOption(1);
         account.setBannerOption(1);
@@ -78,21 +97,49 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public boolean changePassword(String username, String oldPassword, String newPassword) {
         if (username == null || oldPassword == null || newPassword == null) {
             return false;
         }
+        String normalizedUsername = username.trim();
+        String normalizedNewPassword = newPassword.trim();
 
-        QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
-        signonQuery.eq("username", username).eq("password", oldPassword);
-        Signon signon = signonMapper.selectOne(signonQuery);
-        
-        if (signon == null) {
+        Account account = getAccountByUsername(normalizedUsername);
+        if (account == null) {
             return false;
         }
 
-        UpdateWrapper<Signon> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("username", username).set("password", newPassword);
-        return signonMapper.update(null, updateWrapper) > 0;
+        QueryWrapper<Signon> signonQuery = new QueryWrapper<>();
+        signonQuery.eq("username", normalizedUsername);
+        Signon signon = signonMapper.selectOne(signonQuery);
+
+        boolean signonMatches = signon != null && oldPassword.equals(signon.getPassword());
+        boolean accountMatches = oldPassword.equals(account.getPassword());
+        if (!signonMatches && !accountMatches) {
+            return false;
+        }
+
+        if (signon == null) {
+            signon = new Signon();
+            signon.setUsername(normalizedUsername);
+            signon.setPassword(normalizedNewPassword);
+            signonMapper.insert(signon);
+        } else {
+            UpdateWrapper<Signon> signonUpdate = new UpdateWrapper<>();
+            signonUpdate.eq("username", normalizedUsername).set("password", normalizedNewPassword);
+            signonMapper.update(null, signonUpdate);
+        }
+
+        UpdateWrapper<Account> accountUpdate = new UpdateWrapper<>();
+        accountUpdate.eq("userid", normalizedUsername).set("password", normalizedNewPassword);
+        accountMapper.update(null, accountUpdate);
+
+        Account updatedAccount = getAccountByUsername(normalizedUsername);
+        Signon updatedSignon = signonMapper.selectOne(new QueryWrapper<Signon>().eq("username", normalizedUsername));
+        return updatedAccount != null
+                && updatedSignon != null
+                && normalizedNewPassword.equals(updatedAccount.getPassword())
+                && normalizedNewPassword.equals(updatedSignon.getPassword());
     }
 }

@@ -26,14 +26,13 @@ public class Account {
     private String zip;
     private String country;
     private String phone;
-    @TableField(exist = false)
+    @TableField("langpref")
     private String languagePreference;
-    @TableField(exist = false)
+    @TableField("favcategory")
     private String favoriteCategory;
-    @TableField(exist = false)
+    @TableField("mylistopt")
     private int myListOption;
-    @TableField(exist = false)
+    @TableField("banneropt")
     private int bannerOption;
-    @TableField(exist = false)
     private String password;
 }

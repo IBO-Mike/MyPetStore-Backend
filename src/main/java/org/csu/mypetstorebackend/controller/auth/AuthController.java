@@ -40,7 +40,7 @@ public class AuthController {
             return ApiResponse.badRequest("Username and password are required");
         }
 
-        Account account = accountService.login(request.getUsername(), request.getPassword());
+        Account account = accountService.login(request.getUsername().trim(), request.getPassword().trim());
         if (account == null) {
             return ApiResponse.unauthorized("Username or password incorrect");
         }
