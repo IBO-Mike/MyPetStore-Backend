@@ -38,8 +38,7 @@ spring.datasource.password=root
 仓库内提供了初始化 SQL：
 
 ```text
-jpetstore.sql       基础表结构和演示数据
-compare_schema.sql  收藏和商品对比扩展表
+mypetstore.sql
 ```
 
 创建数据库：
@@ -57,15 +56,13 @@ CREATE DATABASE IF NOT EXISTS mps DEFAULT CHARACTER SET utf8;
 回到项目目录后导入数据：
 
 ```bash
-mysql -u root -p mps < jpetstore.sql
-mysql -u root -p mps < compare_schema.sql
+mysql -u root -p mps < mypetstore.sql
 ```
 
 如果本机 root 密码就是默认的 `root`，也可以使用：
 
 ```bash
-mysql -u root -proot mps < jpetstore.sql
-mysql -u root -proot mps < compare_schema.sql
+mysql -u root -proot mps < myperetstore.sql
 ```
 
 ## 本地运行
