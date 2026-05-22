@@ -18,6 +18,7 @@ import org.csu.mypetstorebackend.service.OrderService;
 import org.csu.mypetstorebackend.service.CartService;
 import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -110,8 +111,9 @@ public class OrderServiceImpl implements OrderService {
         QueryWrapper<OrderStatus> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("orderid", orderId).eq("linenum", 0).last("LIMIT 1");
         OrderStatus orderStatus = orderStatusMapper.selectOne(queryWrapper);
+        boolean isNewStatus = orderStatus == null;
 
-        if (orderStatus == null) {
+        if (isNewStatus) {
             orderStatus = new OrderStatus();
             orderStatus.setOrderId(orderId);
             orderStatus.setLineNumber(0);
@@ -138,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
         }
         orderStatus.setStatus(statusStr);
 
-        if (orderStatus.getOrderId() == 0) {
+        if (isNewStatus) {
             orderStatusMapper.insert(orderStatus);
         } else {
             QueryWrapper<OrderStatus> updateWrapper = new QueryWrapper<>();
@@ -154,6 +156,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Orders createOrder(String userId, Orders order) {
         order.setUserId(userId);
         order.setOrderDate(LocalDate.now().format(DateTimeFormatter.ISO_DATE));
@@ -242,6 +245,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Orders updateOrderStatus(int orderId, String status) {
         Orders order = getOrderById(orderId);
         if (order != null) {
@@ -258,6 +262,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public void cancelOrder(int orderId) {
         Orders order = getOrderById(orderId);
         if (order != null) {

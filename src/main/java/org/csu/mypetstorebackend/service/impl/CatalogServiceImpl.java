@@ -12,6 +12,7 @@ import org.csu.mypetstorebackend.persistence.ProductMapper;
 import org.csu.mypetstorebackend.service.CatalogService;
 import org.csu.mypetstorebackend.utils.TimeUtil;
 import org.springframework.stereotype.Service;
+import java.util.Locale;
 import java.util.List;
 
 @Service("catalogService")
@@ -28,6 +29,10 @@ public class CatalogServiceImpl implements CatalogService {
 
     private String getCurrentTimestamp() {
         return TimeUtil.currentMysqlDateTime();
+    }
+
+    private String normalizeSearchValue(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private Product attachItems(Product product) {
@@ -138,11 +143,21 @@ public class CatalogServiceImpl implements CatalogService {
     public PageResponse<Product> searchProducts(String keyword, String categoryId, int page, int pageSize) {
         Page<Product> pageObj = new Page<>(page, pageSize);
         QueryWrapper<Product> queryWrapper = new QueryWrapper<>();
-        if (keyword != null && !keyword.isEmpty()) {
-            queryWrapper.and(q -> q.like("name", keyword).or().like("descn", keyword));
+        String normalizedKeyword = normalizeSearchValue(keyword);
+        String normalizedCategoryId = normalizeSearchValue(categoryId);
+        if (!normalizedKeyword.isEmpty()) {
+            String keywordLower = normalizedKeyword.toLowerCase(Locale.ROOT);
+            queryWrapper.and(q -> q
+                    .apply("LOWER(productid) LIKE CONCAT('%', {0}, '%')", keywordLower)
+                    .or()
+                    .apply("LOWER(name) LIKE CONCAT('%', {0}, '%')", keywordLower)
+                    .or()
+                    .apply("LOWER(descn) LIKE CONCAT('%', {0}, '%')", keywordLower)
+                    .or()
+                    .apply("LOWER(category) LIKE CONCAT('%', {0}, '%')", keywordLower));
         }
-        if (categoryId != null && !categoryId.isEmpty()) {
-            queryWrapper.eq("category", categoryId);
+        if (!normalizedCategoryId.isEmpty()) {
+            queryWrapper.eq("category", normalizedCategoryId);
         }
         Page<Product> result = productMapper.selectPage(pageObj, queryWrapper);
         return new PageResponse<>(result.getTotal(), page, pageSize, attachItems(result.getRecords()));
